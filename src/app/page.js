@@ -24,7 +24,7 @@ export default function Home() {
           </div>
           {/* 로고 */}
           <div className="z-10 mb-6">
-            <img src="/icon/optimo.png" alt="Optimo Logo" className="w-20 h-20 mx-auto" />
+            <Image src="/icon/optimo.png" alt="Optimo Logo" width={80} height={80} className="mx-auto" />
           </div>
           {/* 타이틀 */}
           <h1 className="z-10 text-5xl font-bold text-lime-400 mb-8">Optimo</h1>

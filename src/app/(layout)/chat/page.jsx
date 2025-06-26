@@ -187,7 +187,7 @@ export default function MainPage() {
                             rows={1}
                         />
                         <button className="p-2 hover:bg-[#5b5f6b] rounded-lg transition-colors" onClick={handleSendMessage}>
-                            <img src="/icon/arrow.svg" alt="전송" className="w-7 h-7" />
+                            <Image src="/icon/arrow.svg" alt="전송" width={28} height={28} />
                         </button>
                     </div>
                 </div>

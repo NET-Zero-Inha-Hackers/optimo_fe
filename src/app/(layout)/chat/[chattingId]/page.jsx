@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Chatlist from '@/components/Chatlist';
 import ChatMessages from '@/components/ChatMessages';
+import Image from 'next/image';
 
 export default function ChatPage() {
     const params = useParams();
@@ -127,7 +128,7 @@ export default function ChatPage() {
                             rows={1}
                         />
                         <button className="p-2 hover:bg-[#5b5f6b] rounded-lg transition-colors" onClick={handleSendMessage}>
-                            <img src="/icon/arrow.svg" alt="전송" className="w-7 h-7" />
+                            <Image src="/icon/arrow.svg" alt="전송" width={28} height={28} />
                         </button>
                     </div>
                 </div>
