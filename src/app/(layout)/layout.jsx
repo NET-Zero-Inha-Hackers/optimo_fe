@@ -7,7 +7,7 @@ export default function MainLayout({ children }) {
             <Sidebar />
 
             {/* 메인 컨텐츠 */}
-            <div className="flex-1">
+            <div className="flex-1 ml-20">
                 {children}
             </div>
         </div>
