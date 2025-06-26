@@ -11,6 +11,15 @@ module.exports = {
         background: "var(--background)",
         foreground: "var(--foreground)",
       },
+      keyframes: {
+        glow: {
+          '0%, 100%': { opacity: '0.1' },
+          '50%': { opacity: '1' },
+        },
+      },
+      animation: {
+        glow: 'glow 2s ease-in-out infinite',
+      },
     },
   },
   plugins: [],
