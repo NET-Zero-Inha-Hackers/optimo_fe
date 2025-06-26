@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -10,7 +10,16 @@ export default function Sidebar(props) {
     const handleIconClick = (iconName, route) => {
         if (activeIcon === iconName) return;
         setActiveIcon(iconName);
-        router.push(route);
+        if (iconName === 'chat') {
+            const lastChattingId = localStorage.getItem("lastChattingId");
+            if (lastChattingId) {
+                router.push(`/chat/${lastChattingId}`);
+            } else {
+                router.push('/chat');
+            }
+        } else {
+            router.push(route);
+        }
     };
 
     const renderIcon = (iconName, route, alt) => {
@@ -33,7 +42,7 @@ export default function Sidebar(props) {
     };
 
     return (
-        <div className="relative w-24 bg-[#1F2123] p-4 h-screen flex flex-col items-center">
+        <div className="relative w-20 bg-[#1F2123] p-4 h-screen flex flex-col items-center">
             <div className="flex flex-col items-center">
                 <Image
                     src="/icon/optimo.png"
