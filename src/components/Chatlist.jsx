@@ -1,6 +1,6 @@
 import React from 'react';
 
-function Chatlist(props) {
+export default function Chatlist(props) {
     return (
         <div>
             <div className="flex flex-col items-center justify-start w-80 h-screen border-2 border-gray-200">
@@ -11,5 +11,3 @@ function Chatlist(props) {
         </div>
     );
 }
-
-export default Chatlist;
