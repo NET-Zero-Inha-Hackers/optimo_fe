@@ -16,9 +16,14 @@ module.exports = {
           '0%, 100%': { opacity: '0.1' },
           '50%': { opacity: '1' },
         },
+        slideup: {
+          '0%': { opacity: '0', transform: 'translateY(40px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
       },
       animation: {
-        glow: 'glow 2s ease-in-out infinite',
+        glow: 'glow 3.5s ease-in-out infinite',
+        slideup: 'slideup 0.8s cubic-bezier(0.4,0,0.2,1) both',
       },
     },
   },

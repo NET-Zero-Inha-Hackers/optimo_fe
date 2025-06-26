@@ -5,13 +5,13 @@ export default function Home() {
     <>
       <div className="flex h-screen bg-black">
         {/* 왼쪽: Optimo 인트로 */}
-        <div className="relative flex flex-col justify-center items-center w-1/2 h-full bg-black overflow-hidden">
+        <div className="relative flex flex-col justify-center items-center w-1/2 h-full bg-black overflow-hidden animate-slideup">
           {/* 빛나는 점 효과 */}
           <div className="absolute inset-0 z-0">
             {[...Array(30)].map((_, i) => (
               <div
                 key={i}
-                className="absolute rounded-full bg-lime-400 opacity-70 animate-pulse"
+                className="absolute rounded-full bg-lime-400 opacity-100 blur-[1px] animate-glow"
                 style={{
                   width: '6px',
                   height: '6px',
