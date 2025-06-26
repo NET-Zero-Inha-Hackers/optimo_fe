@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Image from 'next/image';
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
@@ -10,12 +10,10 @@ import {
     flexRender,
     createColumnHelper,
 } from "@tanstack/react-table";
+import { useAuth } from "@/contexts/AuthContext";
 
-const userData = {
-    name: "강유진",
-    email: "using6843@gmail.com",
-    profileImageURL: "1"
-};
+import { api } from "@/lib/api";
+import { api as chatapi } from "@/lib/chatapi";
 
 const data = [
     { model: "GPT-4.1", requests: 2524, powerWh: "100.96Wh", perMessageWh: "0.04Wh" },
@@ -37,6 +35,32 @@ const columns = [
 ];
 
 export default function ProfilePage() {
+    const { user, isLoading } = useAuth();
+    const [userInfo, setUserInfo] = useState(null);
+    const [electricityData, setElectricityData] = useState([]);
+
+    useEffect(() => {
+        const fetchUserInfo = async () => {
+            try {
+                const info = await api.get('/user/jwt');
+                console.log("userInfo", info);
+                setUserInfo(info);
+            } catch (error) {
+                console.error("사용자 정보 가져오기 실패:", error);
+            }
+        };
+
+        fetchUserInfo();
+    }, []);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            const response = await chatapi.get('/electricity');
+            setElectricityData(response);
+        }
+        fetchData();
+    }, []);
+
     const table = useReactTable({
         data,
         columns,
@@ -48,6 +72,17 @@ export default function ProfilePage() {
         const val = parseFloat(row.powerWh.replace("Wh", ""));
         return acc + (isNaN(val) ? 0 : val);
     }, 0).toFixed(2);
+
+    // 로딩 중이거나 사용자가 없으면 로딩 화면 표시
+    if (isLoading || !user) {
+        console.log("isLoading",isLoading);
+        console.log("user",user);
+        return (
+            <div className="flex items-center justify-center h-screen text-white">
+                <div>로딩 중...</div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col h-screen text-white">
@@ -62,7 +97,7 @@ export default function ProfilePage() {
                 </div>
                 <div className="-mt-20 z-10">
                     <Image
-                        src={`/userProfile/${userData.profileImageURL}.png`}
+                        src={user.profileImage || `/userProfile/1.png`}
                         alt="profile"
                         width={150}
                         height={150}
@@ -70,8 +105,11 @@ export default function ProfilePage() {
                     />
                 </div>
                 <div className="mt-4 text-center">
-                    <p className="text-xl font-bold">{userData.name}</p>
-                    <p className="text-gray-400 underline">{userData.email}</p>
+                    <p className="text-xl font-bold">{user.name || "No name"}</p>
+                    <p className="text-gray-400 underline">{user.email}</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                        총 전력 소비: {electricityData?.totalUsedEstimatedElectricity?.toFixed(2)}Wh | 가장 큰 LLM 모델 선택시의 전력 소비: {electricityData?.totalLLMEstimatedElectricity?.toFixed(2)}Wh
+                    </p>
                 </div>
 
             </div>
@@ -79,16 +117,19 @@ export default function ProfilePage() {
                 <div className="space-y-8 p-8 flex-1 flex flex-col items-center justify-center">
                     <h3 className="text-2xl font-bold">지속 가능성 대시보드</h3>
                     <p className="text-sm text-gray-400">
-                        가장 많이 쓰이는 LLM, GPT-4보다 약 1000Wh를 절약했어요 ❗️
+                        가장 많이 쓰이는 LLM, GPT-4보다 약 {electricityData?.totalSavedEstimatedElectricity?.toFixed(2)}Wh를 절약했어요 ❗️
                     </p>
 
                     {/* 게이지 그래프 */}
                     <div className="flex gap-10">
-                        <GaugeCard title="전력 소비량" percentage={65} />
-                        <GaugeCard title="CO₂ 소비량" percentage={55} />
+                        <GaugeCard title="전력 소비량" percentage={(electricityData?.totalUsedEstimatedElectricity/electricityData?.totalLLMEstimatedElectricity*100).toFixed(2)} />
+                        <div className="flex flex-col justify-center items-center min-w-80 bg-neutral-800 p-4 rounded-xl shadow-lg">
+                            <p className="text-2xl">CO₂ 절감량</p>
+                            <p className="text-[50px] font-bold">{(electricityData?.totalSavedEstimatedElectricity*0.475).toFixed(3)}g</p>
+                        </div>
                     </div>
 
-                    <div className="bg-neutral-800 p-6 rounded-xl shadow-lg max-w-3xl mx-auto w-full flex flex-col">
+                    {/* <div className="bg-neutral-800 p-6 rounded-xl shadow-lg max-w-3xl mx-auto w-full flex flex-col">
                         <h2 className="text-xl font-semibold mb-4 text-white">AI 모델별 요청 및 전력 소모</h2>
                         <div className="overflow-x-auto rounded-xl border border-gray-600 flex flex-col">
                             <table className="min-w-[720px] table-auto text-white">
@@ -123,7 +164,7 @@ export default function ProfilePage() {
                                 </tfoot>
                             </table>
                         </div>
-                    </div>
+                    </div> */}
                 </div>
             </div>
         </div>

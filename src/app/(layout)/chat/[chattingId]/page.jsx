@@ -6,64 +6,48 @@ import { useParams } from "next/navigation";
 import Chatlist from "@/components/Chatlist";
 import ChatMessages from "@/components/ChatMessages";
 import Image from "next/image";
+import { useChat } from "@/contexts/ChatContext";
+import { continueChatWebSocket } from "@/lib/websocket";
 
 export default function ChatPage() {
   const params = useParams();
   const chattingId = params.chattingId;
-
-  const [chatData, setChatData] = useState({
-    chattingId: "",
-    ownerId: "",
-    title: "",
-    description: "",
-    chatList: [],
-    createdAt: 0,
-    modifiedAt: 0,
-  });
-
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // localStorage에 lastchattingid 저장
-    localStorage.setItem("lastchattingid", chattingId);
-
-    // DB에서 채팅 데이터 조회 (실제 구현에서는 API 호출)
-    fetchChatData(chattingId);
-  }, [chattingId]);
-
-  const fetchChatData = async (id) => {
-    try {
-      setLoading(true);
-
-      // 실제 API 호출
-      const response = await fetch(`/api/chat/${id}`);
-
-      if (!response.ok) {
-        throw new Error("채팅을 찾을 수 없습니다");
-      }
-
-      const data = await response.json();
-      setChatData(data);
-    } catch (error) {
-      console.error("채팅 데이터 조회 실패:", error);
-      // 에러 시 빈 채팅으로 설정
-      setChatData({
-        chattingId: id,
-        ownerId: "",
-        title: "채팅을 찾을 수 없습니다",
-        description: "",
-        chatList: [],
-        createdAt: 0,
-        modifiedAt: 0,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  const { getCurrentChat, updateChat, setCurrentChatId } = useChat();
+  
   const [formData, setFormData] = useState({
     content: "",
   });
+
+  // 실시간 스트리밍을 위한 로컬 상태
+  const [localChatList, setLocalChatList] = useState([]);
+
+  // chattingId가 바뀔 때마다 현재 채팅 설정
+  useEffect(() => {
+    setCurrentChatId(chattingId);
+  }, [chattingId, setCurrentChatId]);
+
+  // 현재 채팅 데이터 가져오기
+  const chatData = getCurrentChat();
+
+  // Context 데이터가 변경되면 로컬 상태 동기화
+  useEffect(() => {
+    if (chatData?.chatList) {
+      setLocalChatList([...chatData.chatList]);
+    }
+  }, [chatData?.chatList]);
+
+  // 채팅 목록이 변경될 때마다 자동으로 스크롤
+  useEffect(() => {
+    const chatBox = document.getElementById('chat-box');
+    if (chatBox) {
+      setTimeout(() => {
+        chatBox.scrollTo({
+          top: chatBox.scrollHeight,
+          behavior: 'smooth'
+        });
+      }, 100);
+    }
+  }, [localChatList]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -80,10 +64,87 @@ export default function ChatPage() {
   };
 
   const handleSendMessage = () => {
-    if (formData.content.trim() === "") return;
+    if (formData.content.trim() === "" || !chatData) return;
 
-    // TODO: 실제 메시지 전송 로직 구현
-    console.log("메시지 전송:", formData.content);
+    console.log("=== 메시지 전송 시작 ===");
+
+    const userChatElement = {
+      sender: "USER",
+      text: formData.content,
+      timestamp: Math.floor(Date.now() / 1000),
+      model: "",
+      use_estimate: 0,
+      llm_estimate: 0,
+    };
+
+    // 1. 유저 메시지를 Context에 즉시 저장
+    const updatedChatListWithUser = [...(chatData.chatList || []), userChatElement];
+    updateChat(chattingId, {
+      chatList: updatedChatListWithUser
+    });
+
+    let currentAIMessage = null; // 현재 AI 메시지 추적
+
+    function modelNameHandler(modelName) {
+      console.log("AI 모델 시작:", modelName);
+      
+      // AI 메시지 박스 생성 (로컬 상태에만)
+      currentAIMessage = {
+        sender: "AI",
+        text: "",
+        timestamp: Math.floor(Date.now() / 1000),
+        model: modelName,
+        use_estimate: 0,
+        llm_estimate: 0,
+      };
+      
+      setLocalChatList(prev => [...prev, currentAIMessage]);
+    }
+
+    function modelResponseHandler(id, text) {
+      // 실시간 스트리밍 (로컬 상태만 업데이트)
+      if (currentAIMessage) {
+        currentAIMessage.text += text;
+        setLocalChatList(prev => {
+          const newList = [...prev];
+          const lastIndex = newList.length - 1;
+          if (newList[lastIndex] && newList[lastIndex].sender === "AI") {
+            newList[lastIndex] = { ...currentAIMessage };
+          }
+          return newList;
+        });
+      }
+    }
+
+    // WebSocket 연결 설정 (응답 완료 처리 추가)
+    const socket = continueChatWebSocket(
+      chattingId,
+      formData.content,
+      document.cookie.split('; ').find(row => row.startsWith('jwtToken='))?.split('=')[1],
+      modelNameHandler,
+      modelResponseHandler
+    );
+
+    // WebSocket 메시지 이벤트 추가 처리
+    const originalOnMessage = socket.onmessage;
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      
+      // 기존 처리
+      if (originalOnMessage) {
+        originalOnMessage(event);
+      }
+      
+      // 응답 완료 시 Context에 저장
+      if (data.end === "end" && currentAIMessage) {
+        console.log("AI 응답 완료 - Context에 저장");
+        const finalChatList = [...updatedChatListWithUser, currentAIMessage];
+        updateChat(chattingId, {
+          chatList: finalChatList,
+          modifiedAt: Date.now()
+        });
+      }
+    };
 
     setFormData({ content: "" });
     const textarea = document.querySelector('textarea[name="content"]');
@@ -98,12 +159,12 @@ export default function ChatPage() {
     }
   };
 
-  if (loading) {
+  if (!chatData) {
     return (
       <div className="flex flex-row h-screen">
         <Chatlist />
         <div className="flex-1 flex items-center justify-center">
-          <div className="text-white">로딩 중...</div>
+          <div className="text-white">채팅을 찾을 수 없습니다</div>
         </div>
       </div>
     );
@@ -119,7 +180,7 @@ export default function ChatPage() {
             id="chat-box"
             className="flex flex-col flex-1 overflow-y-auto min-h-0"
           >
-            <ChatMessages chatList={chatData.chatList} />
+            <ChatMessages chatList={localChatList} />
           </div>
           <div
             id="input-box"

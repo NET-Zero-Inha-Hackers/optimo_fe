@@ -1,15 +1,18 @@
 import React from "react";
 import Sidebar from "@/components/Sidebar";
+import { ChatProvider } from "@/contexts/ChatContext";
 
 export default function MainLayout({ children }) {
     return (
-        <div className="flex flex-row">
-            <Sidebar />
+        <ChatProvider>
+            <div className="flex flex-row">
+                <Sidebar />
 
-            {/* 메인 컨텐츠 */}
-            <div className="flex-1 ml-20">
-                {children}
+                {/* 메인 컨텐츠 */}
+                <div className="flex-1 ml-20">
+                    {children}
+                </div>
             </div>
-        </div>
+        </ChatProvider>
     );
 }

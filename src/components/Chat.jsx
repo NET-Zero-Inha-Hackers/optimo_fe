@@ -20,13 +20,13 @@ export default function Chat({ title, description, onClick, isActive }) {
                     height={14}
                 />
                 <p className="flex-1 text-sm font-bold truncate">{title}</p>
-                <Image
+                {/* <Image
                     src="/icon/close.png"
                     alt="close icon"
                     width={16}
                     height={16}
                     onClick={() => { }}
-                />
+                /> */}
             </div>
             <p className="text-xs text-gray-400 line-clamp-2 mt-1 ml-6">{description}</p>
         </div>

@@ -1,7 +1,7 @@
 // API 클라이언트 - axios와 동일한 문법, 자동 토큰 갱신
 class ApiClient {
     constructor() {
-      this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      this.baseURL = process.env.NEXT_PUBLIC_CHATAPI_URL || 'http://localhost:3001/api';
       this.isRefreshing = false;
       this.failedQueue = [];
     }

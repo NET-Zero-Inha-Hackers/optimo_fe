@@ -5,9 +5,13 @@ import Chatlist from "@/components/Chatlist";
 import Image from "next/image";
 import ChatMessages from "@/components/ChatMessages";
 import { newChatWebSocket, continueChatWebSocket } from "@/lib/websocket";
+import { useAuth } from "@/contexts/AuthContext";
+import { useChat } from "@/contexts/ChatContext";
 
 export default function MainPage() {
   const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
+  const { addChat, setCurrentChatId, updateChat } = useChat();
   const [isRedirecting, setIsRedirecting] = useState(true);
   const [chat, setChat] = useState({
     chattingId: "",
@@ -20,17 +24,33 @@ export default function MainPage() {
   });
 
   useEffect(() => {
-    // localStorage에서 lastchattingid 확인
-    const lastChattingId = localStorage.getItem("lastchattingid");
+    if (!authLoading && !user) {
+      router.push('/');
+      return;
+    }
+
+    const lastChattingId = localStorage.getItem("lastChattingId");
+    console.log("lastChattingId",lastChattingId);
 
     if (lastChattingId) {
-      // lastchattingid가 있으면 해당 채팅으로 리다이렉트
       router.push(`/chat/${lastChattingId}`);
     } else {
-      // 없으면 현재 페이지에서 빈 채팅 화면 표시
       setIsRedirecting(false);
     }
-  }, [router]);
+  }, [router, user, authLoading]);
+
+  // 채팅 목록이 변경될 때마다 자동으로 스크롤
+  useEffect(() => {
+    const chatBox = document.getElementById('chat-box');
+    if (chatBox) {
+      setTimeout(() => {
+        chatBox.scrollTo({
+          top: chatBox.scrollHeight,
+          behavior: 'smooth'
+        });
+      }, 100);
+    }
+  }, [chat.chatList]);
 
   const [formData, setFormData] = useState({
     content: "",
@@ -39,13 +59,9 @@ export default function MainPage() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
-    // 자동 높이 조절
     e.target.style.height = "auto";
-    const newHeight = Math.min(200, e.target.scrollHeight); // 최대 200px
+    const newHeight = Math.min(200, e.target.scrollHeight);
     e.target.style.height = newHeight + 5 + "px";
-
-    // 스크롤을 맨 아래로 이동
-    e.target.scrollTop = e.target.scrollHeight;
 
     setFormData((prev) => ({
       ...prev,
@@ -53,8 +69,9 @@ export default function MainPage() {
     }));
   };
 
-  // 메시지 전송 함수
   const handleSendMessage = () => {
+    if (formData.content.trim() === "") return;
+
     const userChatElement = {
       sender: "USER",
       text: formData.content,
@@ -68,9 +85,9 @@ export default function MainPage() {
       ...prev,
       chatList: [...prev.chatList, userChatElement],
     }));
+
     function modelNameHandler(modelName) {
-      // 모델 이름 처리 로직 (예: 상태 업데이트 등)
-      const aiChatElemnet = {
+      const aiChatElement = {
         sender: "AI",
         text: "",
         timestamp: Math.floor(Date.now() / 1000),
@@ -80,16 +97,18 @@ export default function MainPage() {
       };
       setChat((prev) => ({
         ...prev,
-        chatList: [...prev.chatList, aiChatElemnet],
+        chatList: [...prev.chatList, aiChatElement],
       }));
       console.log("모델 이름:", modelName);
     }
+
     function modelResponseHandler(id, text) {
-      // append text to the last AI message
       setChat((prev) => {
-        const updatedChatList = prev.chatList;
-        const lastIndex = prev.chatList.length - 1;
-        updatedChatList[lastIndex].text += text;
+        const updatedChatList = [...prev.chatList];
+        const lastIndex = updatedChatList.length - 1;
+        if (updatedChatList[lastIndex] && updatedChatList[lastIndex].sender === "AI") {
+          updatedChatList[lastIndex].text += text;
+        }
         return {
           ...prev,
           chatList: updatedChatList,
@@ -97,50 +116,81 @@ export default function MainPage() {
       });
 
       console.log("모델 응답:", id, text);
+      const chatBox = document.getElementById('chat-box');
+      if (chatBox) {
+        setTimeout(() => {
+          chatBox.scrollTo({
+            top: chatBox.scrollHeight,
+            behavior: 'smooth'
+          });
+        }, 100);
+      }
     }
-    function metadataHandler(id, title, description) {
-      // 메타데이터 처리 로직 (예: 상태 업데이트 등)
+
+    async function metadataHandler(id, title, description) {
+      const newChatData = {
+        _id: id,
+        chattingId: id,
+        ownerId: user?.id || "",
+        title: title,
+        description: description,
+        chatList: chat.chatList,
+        createdAt: Date.now(),
+        modifiedAt: Date.now(),
+      };
+
+      // Context에 새 채팅 추가
+      addChat(newChatData);
+      
+      // 현재 채팅 설정
+      setCurrentChatId(id);
+      
       setChat((prev) => ({
         ...prev,
         chattingId: id,
         title: title,
         description: description,
       }));
-      // localStorage에 새 chattingId 저장
-      localStorage.setItem("lastchattingid", id);
+      
+      localStorage.setItem("lastChattingId", id);
       console.log("메타데이터:", id, title, description);
     }
 
-    if (chat.chatList.length > 0) {
-      // 기존 채팅이 있는 경우
+    const token = document.cookie.split('; ').find(row => row.startsWith('jwtToken='))?.split('=')[1];
+
+    if (chat.chattingId && chat.chatList.length > 0) {
+      // 기존 채팅에 메시지 추가
       const socket = continueChatWebSocket(
         chat.chattingId,
         formData.content,
-        localStorage.getItem("jwtToken"),
+        token,
         modelNameHandler,
         modelResponseHandler
       );
     } else {
-      // WebSocket 연결 설정
+      // 새 채팅 생성
       const socket = newChatWebSocket(
         formData.content,
-        localStorage.getItem("jwtToken"),
+        token,
         modelNameHandler,
         modelResponseHandler,
         metadataHandler
       );
     }
+
+    setFormData({ content: "" });
+    const textarea = document.querySelector('textarea[name="content"]');
+    if (textarea) textarea.style.height = "auto";
   };
 
   const handleInputKeyDown = (e) => {
-    if (e.isComposing || (e.nativeEvent && e.nativeEvent.isComposing)) return; // 한글 조합 중에는 무시
+    if (e.isComposing || (e.nativeEvent && e.nativeEvent.isComposing)) return;
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
   };
 
-  // 리다이렉트 중일 때 로딩 화면 표시
   if (isRedirecting) {
     return (
       <div className="flex flex-row h-screen">
@@ -176,9 +226,7 @@ export default function MainPage() {
               onChange={handleInputChange}
               onKeyDown={handleInputKeyDown}
               className="w-full px-4 py-2 rounded-md resize-none overflow-y-auto bg-transparent outline-none max-h-[150px]"
-              style={{
-                maxHeight: "150px",
-              }}
+              style={{ maxHeight: "150px" }}
               placeholder="내용을 입력하세요..."
               rows={1}
             />
