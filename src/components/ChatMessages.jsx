@@ -67,7 +67,7 @@ export default function ChatMessages({ chatList }) {
                         <Image src={message.sender === 'USER' ? '/icon/user.png' : '/icon/ai.png'} alt="user" width={24} height={24} className="w-10 h-10 rounded-lg z-10" />
                         <div className="flex flex-col ml-2 max-w-full">
                             <div className="text-xs font-semibold">{message.sender}</div>
-                            <div className={`flex flex-col text-xs rounded-2xl pr-4 pl-7 py-5 -ml-5 max-w-full ${message.sender === 'USER' ? 'items-end bg-[#4b4f5b]' : 'items-start bg-[#28303F]'}`}>
+                            <div className={`flex flex-col text-xs rounded-2xl pr-4 pl-7 py-5 -ml-5 ${message.sender === 'USER' ? 'items-end bg-[#4b4f5b]' : 'items-start bg-[#28303F]'}`}>
                                 {message.sender === 'AI' ? (
                                     <div className="prose prose-invert max-w-none text-xs w-full">
                                         <ReactMarkdown

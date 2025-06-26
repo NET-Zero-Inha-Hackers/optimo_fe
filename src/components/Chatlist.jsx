@@ -61,7 +61,7 @@ export default function Chatlist() {
 
             <div className="relative h-[85vh] overflow-y-scroll overflow-x-visible px-1 pt-1">
                 <div className="relative z-0">
-                    {[...allChats].reverse().map((chat) => (
+                    {Array.isArray(allChats) && [...allChats].reverse().map((chat) => (
                         <Chat
                             key={chat._id}
                             title={chat.title}
