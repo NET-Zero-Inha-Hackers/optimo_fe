@@ -1,4 +1,4 @@
-const WEBSOCKET_URL = "ws://optimo-chat.ptg.kr:3000";
+const WEBSOCKET_URL = "wss://optimo-chat-ssl.ptg.kr";
 
 function createWebSocket(
   uri,
