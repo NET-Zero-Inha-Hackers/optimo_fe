@@ -65,18 +65,13 @@ const mockChatData = [
 
 export default function Chatlist() {
     const router = useRouter();
-    const [lastViewedChatId, setLastViewedChatId] = useState(() => {
-        return localStorage.getItem("lastChattingId") || null;
-    });
+    const [lastViewedChatId, setLastViewedChatId] = useState(null);
 
     useEffect(() => {
-        function handleStorageChange(e) {
-            if (e.key === "lastChattingId") {
-                setLastViewedChatId(e.newValue);
-            }
+        const savedId = localStorage.getItem("lastChattingId");
+        if (savedId) {
+            setLastViewedChatId(savedId);
         }
-        window.addEventListener("storage", handleStorageChange);
-        return () => window.removeEventListener("storage", handleStorageChange);
     }, []);
 
     return (
