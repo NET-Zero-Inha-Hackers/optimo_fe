@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Chatlist from "@/components/Chatlist";
 import Image from "next/image";
 import ChatMessages from "@/components/ChatMessages";
-import { newChatWebSocket } from "@/lib/websocket";
+import { newChatWebSocket, continueChatWebSocket } from "@/lib/websocket";
 
 export default function MainPage() {
   const router = useRouter();
@@ -111,14 +111,25 @@ export default function MainPage() {
       console.log("메타데이터:", id, title, description);
     }
 
-    // WebSocket 연결 설정
-    const socket = newChatWebSocket(
-      formData.content,
-      localStorage.getItem("jwtToken"),
-      modelNameHandler,
-      modelResponseHandler,
-      metadataHandler
-    );
+    if (chat.chatList.length > 0) {
+      // 기존 채팅이 있는 경우
+      const socket = continueChatWebSocket(
+        chat.chattingId,
+        formData.content,
+        localStorage.getItem("jwtToken"),
+        modelNameHandler,
+        modelResponseHandler
+      );
+    } else {
+      // WebSocket 연결 설정
+      const socket = newChatWebSocket(
+        formData.content,
+        localStorage.getItem("jwtToken"),
+        modelNameHandler,
+        modelResponseHandler,
+        metadataHandler
+      );
+    }
   };
 
   const handleInputKeyDown = (e) => {
