@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Chatlist from '@/components/Chatlist';
 import Image from 'next/image';
+import Chatlist from '@/components/Chatlist';
 
 const demoChat = {
     chattingId: "chat_1",
