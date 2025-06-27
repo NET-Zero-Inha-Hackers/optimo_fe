@@ -4,8 +4,10 @@ import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function ChatMessages({ chatList }) {
+    const { user } = useAuth();
     const handleCopyText = (text) => {
         navigator.clipboard.writeText(text);
         alert("Copied to clipboard");
@@ -64,7 +66,7 @@ export default function ChatMessages({ chatList }) {
             {chatList.map((message, index) => (
                 <div key={index} className={`flex mb-7 ${message.sender === 'USER' ? 'justify-end' : 'justify-start'}`}>
                     <div className="flex flex-row">
-                        <Image src={message.sender === 'USER' ? '/icon/user.png' : '/icon/ai.png'} alt="user" width={24} height={24} className="w-10 h-10 rounded-lg z-10" />
+                        <Image src={message.sender === 'USER' ? '/userProfile/' + (parseInt(user.profileImage)+1) + '.png' : '/icon/ai.png'} alt="user" width={24} height={24} className="w-10 h-10 rounded-lg z-10" />
                         <div className="flex flex-col ml-2 max-w-full">
                             <div className="text-xs font-semibold">{message.sender}</div>
                             <div className={`flex flex-col text-xs rounded-2xl pr-4 pl-7 py-5 -ml-5 ${message.sender === 'USER' ? 'items-end bg-[#4b4f5b]' : 'items-start bg-[#28303F]'}`}>

@@ -29,7 +29,11 @@ export default function Chatlist() {
         localStorage.setItem("lastChattingId", "");
         setLastViewedChatId("");
         setCurrentChatId(null);
-        router.push('/chat');
+        if (window.location.pathname === '/chat') {
+            window.location.reload();
+        } else {
+            router.push('/chat');
+        }
     };
 
     if (loading) {

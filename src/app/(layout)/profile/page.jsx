@@ -97,7 +97,7 @@ export default function ProfilePage() {
                 </div>
                 <div className="-mt-20 z-10">
                     <Image
-                        src={'/userProfile/' + user.profileImage + '.png' || `/userProfile/1.png`}
+                        src={'/userProfile/' + (parseInt(user.profileImage)+1) + '.png' || `/userProfile/1.png`}
                         alt="profile"
                         width={150}
                         height={150}
