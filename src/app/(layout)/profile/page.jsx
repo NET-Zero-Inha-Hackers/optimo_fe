@@ -117,7 +117,7 @@ export default function ProfilePage() {
                 <div className="space-y-8 p-8 flex-1 flex flex-col items-center justify-center">
                     <h3 className="text-2xl font-bold">지속 가능성 대시보드</h3>
                     <p className="text-sm text-gray-400">
-                        가장 많이 쓰이는 LLM, GPT-4보다 약 {electricityData?.totalSavedEstimatedElectricity?.toFixed(2)}Wh를 절약했어요 ❗️
+                        가장 최신 LLM 모델, GPT-4.1보다 약 {electricityData?.totalSavedEstimatedElectricity?.toFixed(2)}Wh를 절약했어요 ❗️
                     </p>
 
                     {/* 게이지 그래프 */}

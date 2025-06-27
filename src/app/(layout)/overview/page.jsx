@@ -24,7 +24,7 @@ export default function OverviewPage() {
                     <ul className="space-y-4 ml-7">
                         <li>
                             <span className="font-bold"><span className="mr-2">🧠</span>프롬프트 인텔리전스</span><br />
-                            <span className="text-gray-300">프롬프트의 난이도를 분석해 최적의 AI 모델(<span className="font-bold text-white">Phi-3, GPT-4 Turbo</span> 등)로 자동 연결합니다.</span>
+                            <span className="text-gray-300">프롬프트의 난이도를 분석해 최적의 AI 모델(<span className="font-bold text-white">GPT-4o mini, GPT-4o, GPY 4.1</span> 등)로 자동 연결합니다.</span>
                         </li>
                         <li>
                             <span className="font-bold"><span className="mr-2">⚡</span>에너지 최적화</span><br />
